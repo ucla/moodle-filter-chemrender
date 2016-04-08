@@ -1,49 +1,76 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * Chemistry file filter for ChemDoodle and JMol processing and display.
  *
- * @package    filter
- * @subpackage chemrender
+ * @package    filter_chemrender
  * @copyright  2016 UC Regents
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * This filter will replace specified chemistry data file links with the appropriate ChemDoodle or JMol rendered object
+ * ChemDoodle and JMol filter.
+ *
+ * @package    filter_chemrender
+ * @copyright  2016 UC Regents
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class filter_chemrender extends moodle_text_filter {
 
-    function filter($text, array $options = array()) {
-        // Global declaration in case ChemDoodle or YUI JSmol module is inserted elsewhere in page
+    /**
+     * This filter will replace specified chemistry data file links with the
+     * appropriate ChemDoodle or JMol rendered object.
+     *
+     * @param string $text
+     * @param array $options
+     * @return string
+     */
+    public function filter($text, array $options = array()) {
+        // Global declaration in case ChemDoodle or YUI JSmol module is inserted elsewhere in page.
         global $CFG, $chemdoodlehasbeeninitialized, $jsmolhasbeenconfigured;
         $wwwroot = $CFG->wwwroot;
         $host = preg_replace('~^.*://([^:/]*).*$~', '$1', $wwwroot);
 
-        // Filter through Chemdoodle
+        // Filter through Chemdoodle.
         // Edit $chemdoodlefiletypes to add/remove chemical structure file types that can be displayed.
-        // Filetypes: https://web.chemdoodle.com/tutorial/loading-data/
+        // Filetypes: https://web.chemdoodle.com/tutorial/loading-data/.
         $chemdoodlefiletypes = 'mol|jdx|cml';
 
-        $search = '/<a\\b([^>]*?)href=\"((?:\.|\\\|https?:\/\/' . $host . ')[^\"]+\.(' . $chemdoodlefiletypes . '))\??(.*?)\"([^>]*)>(.*?)<\/a>(\s*JMOLSCRIPT\{(.*?)\})?/is';
+        $search = '/<a\\b([^>]*?)href=\"((?:\.|\\\|https?:\/\/' . $host .
+                ')[^\"]+\.(' . $chemdoodlefiletypes . '))\??(.*?)\"([^>]*)>(.*?)<\/a>(\s*JMOLSCRIPT\{(.*?)\})?/is';
 
         $chemdoodletext = preg_replace_callback($search, array($this, 'filter_chemrender_chemdoodle_replace_callback'), $text);
 
         if (($chemdoodletext != $text) && !isset($chemdoodlehasbeeninitialized)) {
             $chemdoodlehasbeeninitialized = true;
             $chemdoodletext = '<link rel="stylesheet" href="' . $wwwroot . '/filter/chemrender/lib/chemdoodle/ChemDoodleWeb.css" type="text/css" />
-                               <script src="' . $wwwroot . '/filter/chemrender/lib/chemdoodle/ChemDoodleWeb.js" type="text/javascript"></script>
-
-                               <script src="' . $wwwroot . '/filter/chemrender/module.js" type="text/javascript"></script>'
+                    <script src="' . $wwwroot . '/filter/chemrender/lib/chemdoodle/ChemDoodleWeb.js" type="text/javascript"></script>
+                    <script src="' . $wwwroot . '/filter/chemrender/module.js" type="text/javascript"></script>'
                     . $chemdoodletext;
         }
 
-        // Filter through JMol
+        // Filter through JMol.
         // Edit $jmolfiletypes to add/remove chemical structure file types that can be displayed.
         // Filetypes: http://wiki.jmol.org/index.php/File_formats.
         $jmolfiletypes = 'cif|cml|csmol|mol|mol2|pdb\.gz|pdb|pse|sdf|xyz';
 
-        $search = '/<a\\b([^>]*?)href=\"((?:\.|\\\|https?:\/\/' . $host . ')[^\"]+\.(' . $jmolfiletypes . '))\??(.*?)\"([^>]*)>(.*?)<\/a>(\s*JMOLSCRIPT\{(.*?)\})?/is';
+        $search = '/<a\\b([^>]*?)href=\"((?:\.|\\\|https?:\/\/' . $host .
+                ')[^\"]+\.(' . $jmolfiletypes . '))\??(.*?)\"([^>]*)>(.*?)<\/a>(\s*JMOLSCRIPT\{(.*?)\})?/is';
 
         $jmoltext = preg_replace_callback($search, array($this, 'filter_chemrender_jmol_replace_callback'), $chemdoodletext);
 
@@ -66,9 +93,12 @@ class filter_chemrender extends moodle_text_filter {
     }
 
     /**
-     *  Use this function to pull out the query array elements.
+     * Use this function to pull out the query array elements.
+     *
+     * @param string $var
+     * @return array
      */
-    function filter_chemrender_parse_query($var) {
+    public function filter_chemrender_parse_query($var) {
         $var = html_entity_decode($var);
         $var = rawurldecode($var);
         $var = explode('&', $var);
@@ -86,7 +116,13 @@ class filter_chemrender extends moodle_text_filter {
         return $arr;
     }
 
-    function filter_chemrender_chemdoodle_replace_callback($matches) {
+    /**
+     * Replaces ChemDoodle text.
+     *
+     * @param array $matches
+     * @return string
+     */
+    public function filter_chemrender_chemdoodle_replace_callback($matches) {
         global $CFG;
         $wwwroot = $CFG->wwwroot;
         $a = uniqid();
@@ -104,7 +140,7 @@ class filter_chemrender extends moodle_text_filter {
         } else {
             $width = 325;
         }
-        //Do not process if JMol is specified
+        // Do not process if JMol is specified.
         if (array_key_exists('renderer', $queryarray)) {
             $renderer = $queryarray['renderer'];
             if ($renderer == 'jmol') {
@@ -213,7 +249,13 @@ class filter_chemrender extends moodle_text_filter {
                 $helplink";
     }
 
-    function filter_chemrender_jmol_replace_callback($matches) {
+    /**
+     * Replaces JMOL text.
+     *
+     * @param string $matches
+     * @return string
+     */
+    public function filter_chemrender_jmol_replace_callback($matches) {
         global $CFG;
         $wwwroot = $CFG->wwwroot;
         static $count = 0;
@@ -264,8 +306,8 @@ class filter_chemrender extends moodle_text_filter {
             $custom = "";
         }
 
-        parse_str($matches[4], $get_array);
-        $get_array = filter_var_array($get_array, FILTER_SANITIZE_STRING);
+        parse_str($matches[4], $getarray);
+        $getarray = filter_var_array($getarray, FILTER_SANITIZE_STRING);
 
         // Get language strings.
         $ballandstick = get_string('ballandstick', 'filter_chemrender');
@@ -301,7 +343,7 @@ class filter_chemrender extends moodle_text_filter {
             $config['label'] = "Jmol.jmolCheckbox(jmol$id, 'label on', 'label off', '$labeling', '')";
         }
 
-        // Prepare specified controls
+        // Prepare specified controls.
         if (count($config) > 0) {
             $control = implode('+', $config);
         } else {
@@ -324,12 +366,12 @@ class filter_chemrender extends moodle_text_filter {
             $loadscript = 'load "' . $fileurl . '";';
         }
 
-        // For previews
+        // For previews.
         if (array_key_exists('sketcheroutput', $queryarray)) {
             $sketcheroutput = gzdecode(base64_decode($matches[6]));
             $sketcheroutput = explode("\n", $sketcheroutput);
             $sketcheroutput = implode('\n', $sketcheroutput);
-            //JSmol requires literal '\n' in multiline strings
+            // JSmol requires literal '\n' in multiline strings.
             $loadscript = 'load inline "' . $sketcheroutput . '";';
         }
 
@@ -339,7 +381,7 @@ class filter_chemrender extends moodle_text_filter {
             $initscript = '';
         }
 
-        // Force Java applet for binary files (.pdb.gz or .pse) with some browsers (IE, Chrome or Safari)
+        // Force Java applet for binary files (.pdb.gz or .pse) with some browsers (IE, Chrome or Safari).
         $browser = strtolower($_SERVER['HTTP_USER_AGENT']);
 
         if ($extension == "pdb.gz" || $extension == "pse") {
@@ -368,7 +410,7 @@ class filter_chemrender extends moodle_text_filter {
         }
 
         if ($showhelplink) {
-            //http://jmol.sourceforge.net/jscolors/
+            // See http://jmol.sourceforge.net/jscolors/.
             $helplink = "<span class='helptooltip'>
              <a href='/help.php?component=filter_chemrender&identifier=jmolinteract&lang=en' title='$jmolhelp' target='_blank'>
              <img class='icon icon-helplink filter_chemrender_jmol_helplink' aria-hidden='true' role='presentation' width='16' height='16' style='background-color:transparent;' src='/filter/chemrender/pix/help.svg' />
