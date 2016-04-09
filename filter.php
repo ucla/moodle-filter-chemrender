@@ -81,7 +81,7 @@ class filter_chemrender extends moodle_text_filter {
                     YUI().applyConfig({
                         modules: {
                             "jsmol": {
-                                fullpath: "/filter/chemrender/lib/jsmol/JSmol.min.js"
+                                fullpath: "' . $wwwroot . '/filter/chemrender/lib/jsmol/JSmol.min.js"
                             }
                         }
                     });
@@ -184,7 +184,7 @@ class filter_chemrender extends moodle_text_filter {
 
                 $helplink = "<span class='helptooltip'>
                                 <a href='$wwwroot/help.php?component=filter_chemrender&identifier=chemdoodlespectrum&lang=en' title='$chemdoodlespectrum' target='_blank'>
-                                <img class='icon icon-helplink filter_chemrender_chemdoodle_helplink' aria-hidden='true' role='presentation' width='16' height='16' style='background-color:transparent;' src='/filter/chemrender/pix/help.svg' />
+                                <img class='icon icon-helplink filter_chemrender_chemdoodle_helplink' aria-hidden='true' role='presentation' width='16' height='16' style='background-color:transparent;' src='$wwwroot/filter/chemrender/pix/help.svg' />
                                 </a>
                                 </span>";
                 break;
@@ -402,7 +402,7 @@ class filter_chemrender extends moodle_text_filter {
 
         if ($showdownloadlink) {
             $downloadlink = "<a href='$fileurl' title='$downloaddatafile'>
-                            <img class='icon filter_chemrender_downloadlink' aria-hidden='true' role='presentation' width='16' height='16' style='background-color:transparent;' src='/filter/chemrender/pix/download.svg' />
+                            <img class='icon filter_chemrender_downloadlink' aria-hidden='true' role='presentation' width='16' height='16' style='background-color:transparent;' src='$wwwroot/filter/chemrender/pix/download.svg' />
 
                             </a>";
         } else {
@@ -410,10 +410,9 @@ class filter_chemrender extends moodle_text_filter {
         }
 
         if ($showhelplink) {
-            // See http://jmol.sourceforge.net/jscolors/.
             $helplink = "<span class='helptooltip'>
              <a href='/help.php?component=filter_chemrender&identifier=jmolinteract&lang=en' title='$jmolhelp' target='_blank'>
-             <img class='icon icon-helplink filter_chemrender_jmol_helplink' aria-hidden='true' role='presentation' width='16' height='16' style='background-color:transparent;' src='/filter/chemrender/pix/help.svg' />
+             <img class='icon icon-helplink filter_chemrender_jmol_helplink' aria-hidden='true' role='presentation' width='16' height='16' style='background-color:transparent;' src='$wwwroot/filter/chemrender/pix/help.svg' />
              </a>
              </span>";
         } else {
