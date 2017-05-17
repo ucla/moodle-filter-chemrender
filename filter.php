@@ -123,7 +123,7 @@ class filter_chemrender extends moodle_text_filter {
      * @return string
      */
     public function filter_chemrender_chemdoodle_replace_callback($matches) {
-        global $CFG;
+        global $CFG, $PAGE;
         $wwwroot = $CFG->wwwroot;
         $a = uniqid();
         $fileurl = $matches[2];
@@ -256,7 +256,7 @@ class filter_chemrender extends moodle_text_filter {
      * @return string
      */
     public function filter_chemrender_jmol_replace_callback($matches) {
-        global $CFG;
+        global $CFG, $PAGE;
         $wwwroot = $CFG->wwwroot;
         static $count = 0;
         $count++;
@@ -419,7 +419,10 @@ class filter_chemrender extends moodle_text_filter {
             $helplink = "";
         }
 
-        return "<div class='jmolcontainer' style='margin-bottom:5px; '>
+             
+
+        if (AJAX_SCRIPT) {
+            return "<div class='jmolcontainer' style='margin-bottom:5px; '>
                     <div style='position relative; width: " . $width . "px; height: " . $height . "px;'>
                     <div id='jmoldiv" . $id . "' style='position: absolute; z-index: 0; width: " . $width . "px; height: " . $height . "px;'>
                     <noscript>" . $jsdisabled . "</noscript>
@@ -457,17 +460,36 @@ class filter_chemrender extends moodle_text_filter {
                         }
 
                         Y.on('load', function () {
-                            //Uncomment following if MathJax is installed
-                            //MathJax.Hub.Queue(function () {
-                                Jmol.setDocument(0);
-                                Jmol._alertNoBinary = false;
-                                Jmol.getApplet('jmol" . $id . "', Info);
-                                $('#jmoldiv" . $id . "').html(Jmol.getAppletHtml(jmol" . $id . "));
-                                $('#control" . $id . "').html(" . $control . ");
-                            //});
+                            Jmol.setDocument(0);
+                            Jmol._alertNoBinary = false;
+                            Jmol.getApplet('jmol" . $id . "', Info);
+
+                            $('#jmoldiv" . $id . "').html(Jmol.getAppletHtml(jmol" . $id . "));
+                            $('#control" . $id . "').html(" . $control . ");
                         });
                     });
                     </script>";
-    }
+        } else {
+            $div_content = "<div class='jmolcontainer' style='margin-bottom:5px; '>
+                    <div style='position relative; width: " . $width . "px; height: " . $height . "px;'>
+                    <div id='jmoldiv" . $id . "' style='position: absolute; z-index: 0; width: " . $width . "px; height: " . $height . "px;'>
+                    <noscript>" . $jsdisabled . "</noscript>
+                    </div>
+                    </div>
+                    <div style='width: " . $width . "px; overflow: auto;'>
+                        <div id='control" . $id . "' class='filter_chemrender_jmol_options_left'></div>
+                        <div id='options" . $id . "' class='filter_chemrender_jmol_options_right'>
+                        " . $downloadlink . "
+                        " . $helplink . "
+                        </div>
+                    </div>
+                </div>";
 
+            $script = $loadscript . $initscript . $custom;
+            $params = array('id' => $id, 'width' => $width, 'height' => $height, 'script' => $script, 'technol' => $technol, 'wwwroot' => $wwwroot, 'control' => $control);
+            $PAGE->requires->js('/filter/chemrender/lib/jsmol/JSmol.min.js');
+            $PAGE->requires->js_call_amd('filter_chemrender/jsmol', 'initialize', array($params));
+            return $div_content;
+        }
+    }
 }
